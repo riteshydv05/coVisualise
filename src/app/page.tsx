@@ -36,6 +36,68 @@ const useCountUp = (end: number, duration: number = 2000) => {
     return count;
 };
 
+// Client-only Floating Particles Component
+const FloatingParticles = () => {
+  const [particles, setParticles] = useState<Array<{
+    id: string;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    color: string;
+    duration: number;
+    delay: number;
+    xOffset: number;
+  }>>([]);
+
+  useEffect(() => {
+    // Generate particles only on client side
+    const newParticles = Array.from({ length: 30 }).map((_, i) => ({
+      id: `global-particle-${i}`,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      width: Math.random() * 3 + 1,
+      height: Math.random() * 3 + 1,
+      color: i % 3 === 0 ? 'rgba(249, 115, 22, 0.4)' : i % 3 === 1 ? 'rgba(34, 211, 238, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+      duration: Math.random() * 15 + 10,
+      delay: Math.random() * 5,
+      xOffset: Math.random() * 50 - 25,
+    }));
+    setParticles(newParticles);
+  }, []);
+
+  if (particles.length === 0) return null;
+
+  return (
+    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute rounded-full"
+          style={{
+            left: `${particle.left}%`,
+            top: `${particle.top}%`,
+            width: particle.width,
+            height: particle.height,
+            backgroundColor: particle.color,
+          }}
+          animate={{
+            y: [0, -100, 0],
+            x: [0, particle.xOffset, 0],
+            opacity: [0.2, 0.6, 0.2],
+          }}
+          transition={{
+            duration: particle.duration,
+            delay: particle.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 
 // UI Components
 // -----------------------------------------------------------------------------
@@ -1408,33 +1470,7 @@ export default function App() {
       <Navbar />
       <main className="bg-black antialiased relative">
         {/* Global Floating Particles */}
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
-          {/* Floating particles across the entire page */}
-          {Array.from({ length: 30 }).map((_, i) => (
-            <motion.div
-              key={`global-particle-${i}`}
-              className="absolute rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                width: Math.random() * 3 + 1,
-                height: Math.random() * 3 + 1,
-                backgroundColor: i % 3 === 0 ? 'rgba(249, 115, 22, 0.4)' : i % 3 === 1 ? 'rgba(34, 211, 238, 0.3)' : 'rgba(255, 255, 255, 0.2)',
-              }}
-              animate={{
-                y: [0, -100, 0],
-                x: [0, Math.random() * 50 - 25, 0],
-                opacity: [0.2, 0.6, 0.2],
-              }}
-              transition={{
-                duration: Math.random() * 15 + 10,
-                delay: Math.random() * 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
+        <FloatingParticles />
         <Hero />
         <AnimatedSection><About /></AnimatedSection>
         <AnimatedSection><Features /></AnimatedSection>
