@@ -1,0 +1,1451 @@
+"use client";
+import React, { FC, ReactNode, useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+// UPDATED: Added new icons for background elements
+import { Video, Film, Zap, CheckCircle, Globe, Briefcase, Award, Menu, X, Mail, Phone, PenTool, Scissors, Edit } from 'lucide-react';
+import { motion } from "framer-motion";
+
+
+// Helper for conditional class names
+const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
+
+// Custom Hook for Count-Up Animation
+const useCountUp = (end: number, duration: number = 2000) => {
+    const [count, setCount] = useState(0);
+    const frameRate = 1000 / 60;
+    const totalFrames = Math.round(duration / frameRate);
+
+    useEffect(() => {
+        let frame = 0;
+        const counter = setInterval(() => {
+            frame++;
+            const progress = frame / totalFrames;
+            const currentCount = Math.round(end * progress);
+            
+            if (frame === totalFrames) {
+                setCount(end);
+                clearInterval(counter);
+            } else {
+                setCount(currentCount);
+            }
+        }, frameRate);
+
+        return () => clearInterval(counter);
+    }, [end, duration, frameRate, totalFrames]);
+
+    return count;
+};
+
+
+// UI Components
+// -----------------------------------------------------------------------------
+
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+}
+
+const Card: FC<CardProps> = ({ className, children, ...props }) => (
+  <div
+    className={cn(
+      'rounded-xl border border-cyan-500/20 bg-black/30 text-white shadow-lg backdrop-blur-sm transition-all duration-300',
+      className
+    )}
+    {...props}
+  >
+    {children}
+  </div>
+);
+
+const CardHeader: FC<CardProps> = ({ className, children, ...props }) => (
+  <div className={cn('flex flex-col space-y-1.5 p-6', className)} {...props}>
+    {children}
+  </div>
+);
+
+const CardTitle: FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ className, children, ...props }) => (
+  <h3 className={cn('font-heading text-2xl font-semibold leading-none tracking-tight', className)} {...props}>
+    {children}
+  </h3>
+);
+
+const CardDescription: FC<React.HTMLAttributes<HTMLParagraphElement>> = ({ className, children, ...props }) => (
+  <p className={cn('text-sm text-neutral-400', className)} {...props}>
+    {children}
+  </p>
+);
+
+const CardContent: FC<CardProps> = ({ className, children, ...props }) => (
+  <div className={cn('p-6 pt-0', className)} {...props}>
+    {children}
+  </div>
+);
+
+const CardFooter: FC<CardProps> = ({ className, children, ...props }) => (
+    <div className={cn('flex items-center p-6 pt-0', className)} {...props}>
+        {children}
+    </div>
+);
+
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+}
+
+const Button: FC<ButtonProps> = ({ className, variant = 'default', size = 'default', ...props }) => {
+  const baseClasses =
+    'font-heading inline-flex items-center justify-center rounded-md text-sm font-bold uppercase tracking-wider ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+
+  const variants = {
+    default: 'bg-orange-600 text-black hover:bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.5)] hover:shadow-[0_0_25px_rgba(249,115,22,0.8)]',
+    destructive: 'bg-red-500 text-destructive-foreground hover:bg-red-500/90',
+    outline: 'border-2 border-cyan-400 bg-transparent hover:bg-cyan-400/10 text-cyan-400 hover:text-cyan-300',
+    secondary: 'bg-neutral-800 text-secondary-foreground hover:bg-neutral-700',
+    ghost: 'hover:bg-accent hover:text-accent-foreground',
+    link: 'text-primary underline-offset-4 hover:underline',
+  };
+
+  const sizes = {
+    default: 'h-11 px-6 py-2',
+    sm: 'h-9 rounded-md px-3',
+    lg: 'h-12 rounded-md px-8 text-base',
+    icon: 'h-10 w-10',
+  };
+
+  return <button className={cn(baseClasses, variants[variant], sizes[size], className)} {...props} />;
+};
+
+// Custom SVG Icons for Social Media
+const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path><path d="M19.07 4.93a10 10 0 1 1-14.14 0 10 10 0 0 1 14.14 0z"></path></svg>
+);
+
+const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+);
+
+const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 2L11 13L2 9L22 2zM11 13L22 22L11 13z"></path></svg>
+);
+
+// Animated SVG Logo using framer-motion
+const AnimatedLogo = () => (
+  <motion.div
+    initial={{ rotate: 0, scale: 1 }}
+    animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.06, 1.06, 1] }}
+    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+    className="text-orange-500"
+    aria-hidden="true"
+  >
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7 12.5C8.5 9 10 8 12 8c2 0 3.5 1 5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  </motion.div>
+);
+
+// --- NEW About Section ---
+const About = () => (
+  <section id="about" className="w-full py-16 md:py-20 text-white bg-gradient-to-b from-black via-neutral-950 to-black">
+    <div className="container mx-auto px-4 md:px-6">
+      {/* Company About */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+        className="grid gap-10 md:grid-cols-2 items-center mb-16"
+      >
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          viewport={{ once: true }}
+        >
+          <div className="inline-block rounded-full bg-orange-600/20 border border-orange-500/30 px-3 py-1 text-sm text-orange-400 mb-4">
+            Who We Are
+          </div>
+          <h2 className="font-heading text-3xl font-bold tracking-tighter sm:text-5xl bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
+            About Visualise.Co
+          </h2>
+          <p className="mt-4 text-neutral-300 text-base md:text-lg leading-relaxed">
+            We craft cinematic stories from raw footage — blending sharp editing, color grading and motion design to help your content stand out. Our team focuses on clarity, emotion and impact while respecting your brand voice.
+          </p>
+          <ul className="mt-6 space-y-3">
+            <motion.li
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              viewport={{ once: true }}
+              className="flex items-start gap-3 text-neutral-300 group hover:text-white transition-colors"
+            >
+              <CheckCircle className="text-orange-500 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform" size={18} />
+              <span>Fast turnarounds without compromising quality.</span>
+            </motion.li>
+            <motion.li
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              viewport={{ once: true }}
+              className="flex items-start gap-3 text-neutral-300 group hover:text-white transition-colors"
+            >
+              <Globe className="text-orange-500 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform" size={18} />
+              <span>Clients worldwide — remote collaboration friendly.</span>
+            </motion.li>
+            <motion.li
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+              viewport={{ once: true }}
+              className="flex items-start gap-3 text-neutral-300 group hover:text-white transition-colors"
+            >
+              <Zap className="text-orange-500 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform" size={18} />
+              <span>Motion graphics, VFX and bespoke visuals.</span>
+            </motion.li>
+          </ul>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            viewport={{ once: true }}
+            className="mt-6"
+          >
+            <a href="#contact">
+              <Button size="lg" className="group">
+                Work With Us
+                <motion.span
+                  className="ml-2 inline-block"
+                  animate={{ x: [0, 5, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  →
+                </motion.span>
+              </Button>
+            </a>
+          </motion.div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="relative"
+        >
+          <div className="rounded-xl overflow-hidden border border-neutral-800 shadow-2xl shadow-orange-500/10 hover:shadow-orange-500/20 transition-shadow duration-500">
+            <Image src="/images/about-hero.svg" alt="About Visualise.Co" width={1200} height={800} className="w-full h-auto" />
+          </div>
+          {/* Decorative gradient */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-orange-400 rounded-xl opacity-0 blur-2xl group-hover:opacity-20 transition-opacity duration-500 -z-10" />
+        </motion.div>
+      </motion.div>
+
+      {/* Founder Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        viewport={{ once: true }}
+        className="grid gap-10 md:grid-cols-2 items-center"
+      >
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="order-2 md:order-1 relative group"
+        >
+          <div className="rounded-xl overflow-hidden border border-neutral-800 shadow-2xl shadow-orange-500/10 hover:shadow-orange-500/30 transition-all duration-500 bg-neutral-900 aspect-square max-w-sm mx-auto flex items-center justify-center relative">
+            {/* Animated gradient background */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-br from-orange-600/20 to-orange-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              animate={{
+                backgroundPosition: ['0% 0%', '100% 100%'],
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                repeatType: 'reverse',
+              }}
+            />
+            {/* Avatar */}
+            <Image 
+              src="/images/Ankur.jpeg" 
+              alt="Ankur Yadav - Founder" 
+              width={400} 
+              height={400} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+          viewport={{ once: true }}
+          className="order-1 md:order-2"
+        >
+          <div className="inline-block rounded-full bg-orange-600/20 border border-orange-500/30 px-3 py-1 text-sm text-orange-400 mb-4">
+            Meet the Founder
+          </div>
+          <h3 className="font-heading text-2xl font-bold tracking-tighter sm:text-4xl bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
+            Ankur Yadav
+          </h3>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            viewport={{ once: true }}
+            className="mt-4 text-neutral-300 text-base md:text-lg leading-relaxed"
+          >
+            Ankur Yadav is a passionate video editor and motion designer with over three years of hands-on experience transforming raw footage into compelling visual stories. Starting his journey editing reels for emerging creators, he quickly developed a reputation for cinematic color grading, razor-sharp cuts and innovative motion graphics.
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            viewport={{ once: true }}
+            className="mt-3 text-neutral-400 leading-relaxed"
+          >
+            Driven by a love for storytelling and technology, Ankur founded Visualise.Co to bridge the gap between ambitious creators and world-class post-production. When he&apos;s not behind the timeline, you&apos;ll find him exploring new editing techniques, mentoring aspiring editors, or gaming late into the night.
+          </motion.p>
+        </motion.div>
+      </motion.div>
+
+      {/* Co-Founder Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        viewport={{ once: true }}
+        className="grid gap-10 md:grid-cols-2 items-center mt-16"
+      >
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+          viewport={{ once: true }}
+          className="order-1 md:order-1"
+        >
+          <div className="inline-block rounded-full bg-orange-600/20 border border-orange-500/30 px-3 py-1 text-sm text-orange-400 mb-4">
+            Meet the Co-Founder
+          </div>
+          <h3 className="font-heading text-2xl font-bold tracking-tighter sm:text-4xl bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
+            Ankit Yadav
+          </h3>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            viewport={{ once: true }}
+            className="mt-4 text-neutral-300 text-base md:text-lg leading-relaxed"
+          >
+            I am Ankit Yadav, a graduate in Economics (Honours) from the University of Delhi. Throughout my academic journey, I developed a strong understanding of how real-world challenges influence both personal development and professional growth. This experience taught me that success is shaped by a balance of opportunities and constraints, and that sustained effort and adaptability are essential in every field.
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            viewport={{ once: true }}
+            className="mt-3 text-neutral-400 leading-relaxed"
+          >
+            Recognizing the increasing competitiveness of today&apos;s professional landscape, I proactively focused on acquiring practical skills beyond academics. Guided by this approach, my brother Ankur (Founder) and I co-founded a creative editing agency. Through this entrepreneurial venture, I gained hands-on experience in content creation, client management, and digital collaboration while contributing to the delivery of quality, value-driven creative solutions.
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            viewport={{ once: true }}
+            className="mt-3 text-neutral-400 leading-relaxed"
+          >
+            I firmly believe in learning through application and consistently upgrading my skill set. I am driven by curiosity and a passion for exploring new ideas, technologies, and growth opportunities. With a strong academic foundation complemented by entrepreneurial exposure, I aspire to create meaningful impact through continuous learning, innovation, and professional excellence.
+          </motion.p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+          viewport={{ once: true }}
+          className="order-2 md:order-2 relative group"
+        >
+          <div className="rounded-xl overflow-hidden border border-neutral-800 shadow-2xl shadow-orange-500/10 hover:shadow-orange-500/30 transition-all duration-500 bg-neutral-900 aspect-square max-w-sm mx-auto flex items-center justify-center relative">
+            {/* Animated gradient background */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-br from-orange-600/20 to-orange-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              animate={{
+                backgroundPosition: ['0% 0%', '100% 100%'],
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                repeatType: 'reverse',
+              }}
+            />
+            {/* Avatar */}
+            <Image 
+              src="/images/Ankit.jpeg" 
+              alt="Ankit Yadav - Co-Founder" 
+              width={400} 
+              height={400} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </motion.div>
+      </motion.div>
+    </div>
+  </section>
+);
+
+// Animation Wrapper Component
+const AnimatedSection = ({ children }: { children: ReactNode }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+        );
+
+        const currentRef = ref.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
+    }, []);
+
+    return (
+        <div
+            ref={ref}
+            className={cn(
+                'transition-all duration-1000 ease-out',
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            )}
+        >
+            {children}
+        </div>
+    );
+};
+
+
+// Page Sections
+// -----------------------------------------------------------------------------
+
+// --- UPDATED Navbar ---
+// Removed 'isVisible' prop and conditional classes. It is now always visible.
+const Navbar = () => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const navLinks = [
+    { href: '#features', label: 'Features' },
+    { href: '#about', label: 'About' },
+    { href: '#pricing', label: 'Pricing' },
+    { href: '#experience', label: 'Experience' },
+    { href: '#contact', label: 'Contact' },
+    ];
+
+    return (
+        <nav className={cn(
+            'fixed top-0 left-0 right-0 z-50 transition-all duration-300 translate-y-0 opacity-100' // Always visible
+        )}>
+            <div className="container mx-auto flex items-center justify-between p-4 bg-black/50 backdrop-blur-lg border-b border-neutral-800">
+                <a href="#" className="flex items-center space-x-2">
+                  <AnimatedLogo />
+                  <span className="font-heading font-bold text-xl text-white">Visualise.Co</span>
+                </a>
+                <div className="hidden md:flex items-center space-x-6">
+                    {navLinks.map(link => (
+                        <a key={link.href} href={link.href} className="text-sm font-medium text-neutral-300 hover:text-orange-500 transition-colors">
+                            {link.label}
+                        </a>
+                    ))}
+                </div>
+                <div className="md:hidden">
+                    <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white">
+                        {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+                </div>
+            </div>
+            {isMenuOpen && (
+                <div className="md-hidden bg-black/80 backdrop-blur-lg">
+                    <div className="container mx-auto flex flex-col items-center space-y-4 p-4">
+                        {navLinks.map(link => (
+                            <a key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-neutral-300 hover:text-orange-500 transition-colors">
+                                {link.label}
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </nav>
+    );
+};
+
+// --- Particle Background Component ---
+const ParticleBackground = () => {
+  const particleCount = 50;
+  
+  // Generate random particles with different properties
+  const particles = Array.from({ length: particleCount }, (_, i) => ({
+    id: i,
+    initialX: Math.random() * 100,
+    initialY: Math.random() * 100,
+    size: Math.random() * 4 + 1,
+    duration: Math.random() * 20 + 15,
+    delay: Math.random() * 5,
+    opacity: Math.random() * 0.5 + 0.1,
+  }));
+
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute rounded-full bg-orange-500"
+          style={{
+            left: `${particle.initialX}%`,
+            top: `${particle.initialY}%`,
+            width: particle.size,
+            height: particle.size,
+          }}
+          animate={{
+            x: [0, Math.random() * 100 - 50, Math.random() * 100 - 50, 0],
+            y: [0, Math.random() * 100 - 50, Math.random() * 100 - 50, 0],
+            opacity: [particle.opacity, particle.opacity * 1.5, particle.opacity * 0.5, particle.opacity],
+            scale: [1, 1.2, 0.8, 1],
+          }}
+          transition={{
+            duration: particle.duration,
+            delay: particle.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+      {/* Glowing orbs */}
+      <motion.div
+        className="absolute w-64 h-64 rounded-full bg-orange-500/10 blur-3xl"
+        style={{ left: '10%', top: '20%' }}
+        animate={{
+          x: [0, 100, 50, 0],
+          y: [0, 50, 100, 0],
+          scale: [1, 1.2, 0.9, 1],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      <motion.div
+        className="absolute w-48 h-48 rounded-full bg-cyan-500/10 blur-3xl"
+        style={{ right: '15%', bottom: '30%' }}
+        animate={{
+          x: [0, -80, -40, 0],
+          y: [0, -60, 80, 0],
+          scale: [1, 0.8, 1.3, 1],
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      <motion.div
+        className="absolute w-32 h-32 rounded-full bg-orange-400/5 blur-2xl"
+        style={{ left: '50%', top: '60%' }}
+        animate={{
+          x: [0, 60, -60, 0],
+          y: [0, -40, 40, 0],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    </div>
+  );
+};
+
+// --- NEW BackgroundElements Component ---
+const BackgroundElements = () => {
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+      {/* Particle Background */}
+      <ParticleBackground />
+      
+      {/* Top-left element */}
+      <motion.div
+        className="absolute -top-16 -left-16 text-neutral-900"
+        animate={{ rotate: 360, opacity: [0, 0.2, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+      >
+        <PenTool size={200} />
+      </motion.div>
+      
+      {/* Bottom-right element */}
+      <motion.div
+        className="absolute -bottom-24 -right-20 text-neutral-900"
+        animate={{ y: [0, -20, 0], opacity: [0.1, 0.3, 0.1] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <Scissors size={250} />
+      </motion.div>
+
+      {/* Center-ish element */}
+      <motion.div
+        className="absolute top-1/2 left-1/3 text-neutral-900"
+        animate={{ scale: [1, 1.1, 1], opacity: [0.05, 0.15, 0.05] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <Edit size={300} />
+      </motion.div>
+
+      {/* Custom SVG Brush Stroke */}
+      <motion.svg
+        className="absolute top-1/4 right-0 text-neutral-900"
+        width="300"
+        height="200"
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        animate={{ x: [0, 30, 0], opacity: [0.1, 0.2, 0.1] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <path d="M10 50 Q 30 30, 50 50 T 90 50" stroke="currentColor" strokeWidth="2" fill="none" />
+        <path d="M10 60 Q 30 40, 50 60 T 90 60" stroke="currentColor" strokeWidth="2" fill="none" />
+      </motion.svg>
+    </div>
+  );
+};
+
+
+const Hero = () => {
+    const words = ['Masterpiece', 'Video Editing', 'Graphics'];
+    const [wordIndex, setWordIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setWordIndex(prevIndex => (prevIndex + 1) % words.length);
+        }, 2000);
+        return () => clearInterval(interval);
+    }, [words.length]);
+
+    return (
+        <section className="relative w-full h-screen flex items-center justify-center text-center overflow-hidden">
+            {/* --- ADDED BackgroundElements --- */}
+            <BackgroundElements />
+            <div className="relative z-10 container mx-auto px-4 md:px-6">
+                <div className="max-w-4xl mx-auto animate-slide-in-up">
+                    <div className="inline-block rounded-full bg-neutral-900/50 border border-neutral-700 px-3 py-1 text-sm text-orange-500 mb-4">
+                        Professional Video Editing Service
+                    </div>
+                    {/* UPDATED: Increased base text size from 4xl to 5xl */}
+                    <h1 className="font-heading text-5xl font-bold tracking-tighter text-white sm:text-6xl md:text-7xl lg:text-8xl leading-tight glitch" data-text="Craft Your Cinematic Masterpiece">
+                        Craft Your Cinematic{' '}
+                        {/* UPDATED: Increased width from 12ch to 14ch to fit "Video Editing" */}
+                        <span className="relative inline-block h-[1.2em] w-[14ch] overflow-hidden align-bottom">
+                            {words.map((word, index) => (
+                                <span
+                                    key={word}
+                                    className={cn(
+                                        'absolute bottom-0 left-0 w-full text-orange-500 transition-all duration-500 ease-in-out',
+                                        index === wordIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'
+                                    )}
+                                >
+                                    {word}
+                                </span>
+                            ))}
+                        </span>
+                    </h1>
+                    {/* UPDATED: Increased base text size from lg to xl */}
+                    <p className="mt-6 max-w-2xl mx-auto text-xl text-neutral-300 md:text-xl">
+                        From raw footage to breathtaking final cuts. We bring your vision to life with professional editing, color grading, and sound design.
+                    </p>
+                    <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="#features">
+                            <Button size="lg">Get Started Now</Button>
+                        </a>
+                        <a href="#about">
+                            <Button size="lg" variant="outline">
+                                <Film className="mr-2 h-5 w-5" />
+                                View Our Work
+                            </Button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+
+const Features = () => {
+const features = [
+    {
+        icon: <Video className="h-8 w-8 text-orange-500" />,
+        title: '4K & 8K Editing',
+        description: ' We handle high-resolution footage to deliver stunningly crisp and detailed videos.',
+    },
+    {
+        icon: <Film className="h-8 w-8 text-orange-500" />,
+        title: 'Cinematic Color Grading',
+        description: 'We set the mood and tone of your video with professional color correction and grading.',
+    },
+    {
+        icon: <Globe className="h-8 w-8 text-orange-500" />,
+        title: 'Web Development',
+        description: 'Custom websites and landing pages to showcase your videos and brand online.',
+    },
+    {
+        icon: <Zap className="h-8 w-8 text-orange-500" />,
+        title: 'Motion Graphics & VFX',
+        description: 'Engage your audience with custom motion graphics, titles, and subtle visual effects.',
+    },
+];
+
+  return (
+    <section id="features" className="w-full py-12 md:py-24 lg:py-32 text-white">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex flex-col items-center justify-center space-y-4 text-center">
+          <div className="space-y-2">
+            <h2 className="font-heading text-3xl font-bold tracking-tighter sm:text-5xl">What We Offer</h2>
+            <p className="max-w-[900px] text-neutral-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+              Our comprehensive suite of editing services ensures your final product is polished, professional, and powerful.
+            </p>
+          </div>
+        </div>
+        <div className="mx-auto grid max-w-5xl items-center gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-2 mt-12">
+          {features.map((feature, index) => (
+            <div key={index} className="feature-card flex items-center gap-4 p-6 rounded-lg transition-all duration-300">
+              <div className="bg-neutral-900 p-3 rounded-full border border-neutral-800">{feature.icon}</div>
+              <div className="grid gap-1">
+                <h3 className="font-heading text-lg font-bold text-left">{feature.title}</h3>
+                <p className="text-sm text-neutral-400 text-left">{feature.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// The previous portfolio section was intentionally removed per request.
+
+const Pricing = () => {
+    const plans = [
+        {
+            title: 'Starter',
+            price: '₹5,000',
+            description: 'For short personal projects and social media content.',
+            features: ['Up to 2 min video', '2-day turnaround', '2 rounds of revisions', '1080p Export','5 Videos'],
+            popular: false,
+        },
+        {
+            title: 'Pro',
+            price: '₹15,000',
+            description: 'Perfect for creators, businesses, and short films.',
+            features: ['Up to 15 min video', '4-day turnaround', '3 rounds of revisions', '4K Export', 'Color Grading', '5 Videos'],
+            popular: true,
+        },
+        {
+            title: 'Enterprise',
+            price: 'Custom',
+            description: 'For feature films, documentaries, and large-scale projects.',
+            features: ['Unlimited length', 'Dedicated editor', 'Unlimited revisions', '8K+ Export', 'Advanced VFX',],
+            popular: false,
+        },
+    ];
+
+    return (
+        <section id="pricing" className="w-full py-12 md:py-24 lg:py-32 text-white">
+            <div className="container mx-auto px-4 md:px-6">
+                <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                    <div className="space-y-2">
+                        <h2 className="font-heading text-3xl font-bold tracking-tighter sm:text-5xl">Simple, Transparent Pricing</h2>
+                        <p className="max-w-[900px] text-neutral-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                            Choose a plan that fits your needs. No hidden fees, just great results.
+                        </p>
+                    </div>
+                </div>
+                <div className="mx-auto grid max-w-5xl items-stretch gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-12">
+                    {plans.map((plan) => (
+                        <Card key={plan.title} className={cn('flex flex-col transition-all duration-300 hover:scale-105 hover:border-orange-500/50 hover:shadow-orange-500/20', plan.popular && 'border-orange-500/50 ring-2 ring-orange-500/50')}>
+                            {plan.popular && (
+                                <div className="bg-orange-600 text-white text-xs font-bold uppercase tracking-wider text-center py-1 rounded-t-xl">
+                                    Most Popular
+                                </div>
+                            )}
+                            <CardHeader>
+                                <CardTitle>{plan.title}</CardTitle>
+                                <CardDescription>{plan.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                                <div className="mb-6">
+                                    <span className="font-heading text-4xl font-bold">{plan.price}</span>
+                                    {plan.title !== 'Enterprise' && <span className="text-neutral-400">/project</span>}
+                                </div>
+                                <ul className="space-y-3 text-sm">
+                                    {plan.features.map((feature) => (
+                                        <li key={feature} className="flex items-center">
+                                            <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                            {feature}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </CardContent>
+                            <CardFooter>
+                                <a href="#contact" className="w-full">
+                                    <Button className="w-full" variant={plan.popular ? 'default' : 'secondary'}>
+                                        Contact Us
+                                    </Button>
+                                </a>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
+const AnimatedStat = ({ value, label, icon }: { value: number, label: string, icon: ReactNode }) => {
+    const count = useCountUp(value);
+    return (
+        <div className="bg-neutral-900/50 border border-neutral-800 flex flex-col items-center text-center p-6 rounded-xl">
+            <div className="font-heading text-4xl font-bold text-white mb-2">{count}+</div>
+            <div className="flex items-center">
+                {icon}
+                <p className="text-neutral-400 ml-2">{label}</p>
+            </div>
+        </div>
+    );
+};
+
+const Experience = () => {
+    const [isVisible, setIsVisible] = useState(false);
+    const sectionRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const currentRef = sectionRef.current;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
+    }, []);
+
+    const stats = [
+        { icon: <Globe className="w-8 h-8 text-orange-400" />, value: 150, label: "Clients Worldwide" },
+        { icon: <Briefcase className="w-8 h-8 text-orange-400" />, value: 2000, label: "Projects Completed" },
+        { icon: <Award className="w-8 h-8 text-orange-400" />, value: 3, label: "Years of Experience" },
+    ];
+
+    return (
+        <section ref={sectionRef} id="experience" className="w-full py-12 md:py-24 lg:py-32 text-white">
+            <div className="container mx-auto px-4 md:px-6">
+                <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                    <div className="space-y-2">
+                        <h2 className="font-heading text-3xl font-bold tracking-tighter sm:text-5xl">Our Achievements</h2>
+                        <p className="max-w-[900px] text-neutral-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                            We have a track record of delivering exceptional results for a diverse range of clients.
+                        </p>
+                    </div>
+                </div>
+                <div className="mx-auto grid max-w-6xl grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-12">
+                    {isVisible && stats.map((stat, index) => (
+                        <AnimatedStat key={index} {...stat} />
+                    ))}
+                </div>
+                 <div className="text-center mt-16">
+                    <h3 className="font-heading text-2xl font-bold tracking-tighter">Working Hours</h3>
+                    <p className="text-neutral-300 mt-2">Monday - Friday: 9:00 AM - 6:00 PM (IST)</p>
+                    <p className="text-neutral-400 text-sm mt-1">Available for rush projects on weekends by appointment.</p>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+const Clients = () => {
+  const clients = [
+    { name: 'Crypto Millionaire Rohit', description: 'Leading crypto influencer & investor.', instagram: 'https://www.instagram.com/crypto_millionaire_rohit?igsh=ZmJhNjF6eHA1eGsx' },
+    { name: 'Crypto Asad', description: 'Blockchain educator & analytics expert.', instagram: 'https://www.instagram.com/crypto.asad?igsh=MXJndjAwZzMzNGhkMg==' },
+    { name: 'Learn With Haripriyaa', description: 'Empowering learners with engaging educational content.', instagram: 'https://www.instagram.com/learnwithharipriyaa?igsh=a2lwbnJya2E1YzMy' },
+    { name: 'GoZero Official', description: 'Pioneers in electric vehicle innovation.', instagram: 'https://www.instagram.com/gozero_official?igsh=MWlwcjIwM3docnVkMw==' },
+    { name: 'Cryptovelps', description: 'Delivering valuable crypto market insights.', instagram: 'https://www.instagram.com/cryptovelps?igsh=MWdmbnByOThxeWZ0Mw==' },
+    { name: 'Nerd With A Bindi', description: 'Unique digital creator and storyteller.', instagram: 'https://www.instagram.com/nerdwithabindi?igsh=MXZzcWQ5Y3ptcTg5NA==' },
+    { name: 'Startup Decoding', description: 'Demystifying the startup ecosystem.', instagram: 'https://www.instagram.com/startup.decoding?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==' },
+    { name: 'Adore Skin Clinic', description: 'Advanced skincare and wellness experts.', instagram: 'https://www.instagram.com/adoreskinclinic?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==' },
+    { name: 'Zoomer Health', description: 'Innovative health and wellness solutions.', instagram: 'https://www.instagram.com/zoomerhealth?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==' },
+    { name: 'Indian Stories', description: 'Celebrating Indian culture and stories.', instagram: 'https://www.instagram.com/indianstories.in?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==' },
+    { name: 'The Unconventional Ca', description: 'Creative finance and business content.', instagram: 'https://www.instagram.com/the_unconventional_ca?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==' },
+  ];
+
+  return (
+    <section id="clients" className="w-full py-16 text-white bg-gradient-to-b from-black via-neutral-950 to-black">
+      <div className="container mx-auto px-4 md:px-6">
+        {/* Heading */}
+        <div className="flex flex-col items-center space-y-4 text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="font-heading text-3xl font-bold tracking-tight sm:text-5xl"
+          >
+            Trusted By The Best
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            className="max-w-[900px] text-neutral-300 md:text-xl"
+          >
+            We’ve had the privilege of working with a diverse range of creators and brands.
+          </motion.p>
+        </div>
+
+        {/* Client Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-14">
+          {clients.map((client, index) => (
+            <motion.a
+              key={index}
+              href={client.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              className="bg-neutral-900/50 backdrop-blur-md p-6 rounded-xl flex flex-col items-center text-center border border-neutral-800 transition-all duration-300 hover:bg-orange-500/10 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/20"
+            >
+              <span className="font-semibold text-lg text-white">{client.name}</span>
+              <span className="text-neutral-400 text-sm mt-2">{client.description}</span>
+              <span className="mt-4 text-orange-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                View Profile →
+              </span>
+            </motion.a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Testimonials = () => {
+    const testimonials = [
+        {
+            name: 'Crypto Millionaire Rohit',
+            initial: 'CR',
+            quote: "They brought my crypto documentary to life with stunning edits and cinematic transitions. The visuals kept my audience hooked till the end!"
+        },
+        {
+            name: 'Crypto Asad',
+            initial: 'CA',
+            quote: "From raw blockchain event footage to a professional highlight reel — they nailed the timing, effects, and storytelling perfectly."
+        },
+        {
+            name: 'Learn With Haripriyaa',
+            initial: 'LH',
+            quote: "My educational videos got a complete facelift! Clean cuts, engaging motion graphics, and perfect pacing for my learners."
+        },
+        {
+            name: 'GoZero Official',
+            initial: 'GO',
+            quote: "They made our EV launch video look like a high-budget ad. Crisp visuals, smooth animations, and top-notch editing!"
+        },
+        {
+            name: 'Cryptovelps',
+            initial: 'CV',
+            quote: "The market analysis explainer videos looked incredibly sleek after their edits — sharp infographics and seamless transitions."
+        },
+        {
+            name: 'Nerd With A Bindi',
+            initial: 'NB',
+            quote: "Loved how they matched the editing style to my quirky, creative brand. The final cut felt 100% ‘me’."
+        },
+    ];
+
+    const firstColumn = testimonials.slice(0, 3);
+    const secondColumn = testimonials.slice(3, 6);
+
+    return (
+        <section id="testimonials" className="w-full py-12 md:py-24 lg:py-32 text-white overflow-hidden">
+            <div className="container mx-auto px-4 md:px-6">
+                <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+                    <div className="inline-block rounded-lg bg-neutral-800 px-3 py-1 text-sm text-orange-500">Testimonials</div>
+                    <h2 className="font-heading text-3xl font-bold tracking-tighter sm:text-5xl">What Our Clients Say</h2>
+                    <p className="max-w-[900px] text-neutral-300 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                        Real stories from real clients who trust us with their vision.
+                    </p>
+                </div>
+                <div className="relative flex h-[450px] [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                        <div className="flex flex-col gap-6 animate-marquee-up">
+                            {firstColumn.map((item, index) => (
+                                <TestimonialCard key={index} {...item} />
+                            ))}
+                            {firstColumn.map((item, index) => (
+                                <TestimonialCard key={`dup-1-${index}`} {...item} aria-hidden="true" />
+                            ))}
+                        </div>
+                        <div className="flex flex-col gap-6 animate-marquee-down">
+                            {secondColumn.map((item, index) => (
+                                <TestimonialCard key={index} {...item} />
+                            ))}
+                            {secondColumn.map((item, index) => (
+                                <TestimonialCard key={`dup-2-${index}`} {...item} aria-hidden="true" />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+const TestimonialCard = ({ name, initial, quote }: { name: string, initial: string, quote: string }) => (
+    <Card className="bg-neutral-900 border-neutral-800 p-6 hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/20 transition-all duration-300">
+        <CardContent className="p-0">
+            <div className="flex items-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-orange-900/50 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold mr-4">
+                    {initial}
+                </div>
+                <p className="font-semibold text-white">{name}</p>
+            </div>
+            <p className="text-neutral-300">&ldquo;{quote}&rdquo;</p>
+        </CardContent>
+    </Card>
+);
+
+const Contact = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    number: "",
+    message: ""
+  });
+
+  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false); // Track submit state
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setStatus("Sending...");
+
+    try {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbzm4-dpVIjzf6U94MA-uxJfFKamQCL5OERjMg-dReX039y1TAt2iHVCqLA_Ne69Cnl72Q/exec", {
+        method: "POST",
+        body: JSON.stringify(formData)
+      });
+
+      const result = await res.json();
+      if (result.status === "success") {
+        setStatus("Message sent successfully!");
+        setFormData({ name: "", email: "", number: "", message: "" });
+      } else {
+        setStatus("Failed to send. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus("Error sending message.");
+    } finally {
+      setIsSubmitting(false); // Re-enable button after request finishes
+    }
+  };
+
+  return (
+    <section id="contact" className="w-full py-12 md:py-24 lg:py-32 text-white">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="text-center">
+          <h2 className="font-heading text-3xl font-bold tracking-tighter sm:text-5xl">Get In Touch</h2>
+          <p className="mt-4 max-w-2xl mx-auto text-neutral-300 md:text-xl/relaxed">
+            Have a project in mind or just want to say hello? We&rsquo;d love to hear from you.
+          </p>
+        </div>
+        <div className="mt-12 max-w-4xl mx-auto grid md:grid-cols-2 gap-12">
+          <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+            <input
+              type="text"
+              name="name"
+              placeholder="Your Name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="bg-neutral-900 border border-neutral-800 rounded-md px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Your Email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="bg-neutral-900 border border-neutral-800 rounded-md px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <input
+              type="number"
+              name="number"
+              placeholder="Your Phone Number"
+              value={formData.number}
+              onChange={handleChange}
+              required
+              className="bg-neutral-900 border border-neutral-800 rounded-md px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <textarea
+              name="message"
+              placeholder="Your Message"
+              rows={5}
+              value={formData.message}
+              onChange={handleChange}
+              required
+              className="bg-neutral-900 border border-neutral-800 rounded-md px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            ></textarea>
+            <Button
+              type="submit"
+              variant="default"
+              size="lg"
+              disabled={isSubmitting} // Disable button while sending
+            >
+              {isSubmitting ? "Sending..." : "Send Message"}
+            </Button>
+            {status && <p className="text-sm text-neutral-400">{status}</p>}
+          </form>
+
+          <div className="flex flex-col justify-center space-y-6">
+            <div className="flex items-center space-x-4">
+              <Mail className="w-6 h-6 text-orange-500" />
+              <div>
+                <h3 className="text-lg font-semibold text-white">Email</h3>
+                <a href="mailto:covisualise@gmail.com" className="text-neutral-300 hover:text-orange-500">covisualise@gmail.com</a>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Phone className="w-6 h-6 text-orange-500" />
+              <div>
+                <h3 className="text-lg font-semibold text-white">Phone</h3>
+                <p className="text-neutral-300">+91 9598822384</p>
+              </div>
+            </div>
+            <div className="flex space-x-4 pt-4">
+              <a href="https://wa.me/+919598822384" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-orange-500 transition-colors"><WhatsAppIcon className="w-8 h-8" /></a>
+              <a href="https://www.instagram.com/visualise._co?igsh=azZzbXVrdWMxemJm" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-orange-500 transition-colors"><InstagramIcon className="w-8 h-8" /></a>
+              <a href="https://t.me/Visualiseco" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-orange-500 transition-colors"><TelegramIcon className="w-8 h-8" /></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const GetHired = () => (
+    <section id="get-hired" className="w-full py-12 md:py-24 text-white">
+        <div className="container mx-auto px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+                <h2 className="font-heading text-3xl font-bold tracking-tighter sm:text-5xl">Be a Part of Us</h2>
+                <p className="max-w-[900px] text-neutral-300 md:text-xl/relaxed">
+                    We are always looking for talented individuals to join our team. If you are passionate about video editing and storytelling, we would love to hear from you.
+                </p>
+                <div className="mt-6">
+                    <a href="https://forms.gle/UbHGmjNL887QSCaD9" target="_blank" rel="noopener noreferrer">
+                        <Button size="lg" variant="default">
+                            Click Here
+                        </Button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+);
+
+const Footer = () => {
+    const navLinks = [
+        { href: '#features', label: 'Features' },
+        { href: '#pricing', label: 'Pricing' },
+        { href: '#experience', label: 'Experience' },
+    ];
+
+    return (
+        <footer className="bg-neutral-950 border-t border-neutral-800 text-neutral-400">
+            <div className="container mx-auto py-12 px-4 md:px-6 text-center">
+                <h2 className="font-heading text-3xl font-bold tracking-tighter text-white sm:text-4xl">
+                    Ready to Start Your Next Project?
+                </h2>
+                <p className="mt-4 max-w-2xl mx-auto text-lg text-neutral-300">
+                    Let&rsquo;s collaborate to create something extraordinary.
+                </p>
+                <div className="mt-8">
+                    <a href="https://wa.me/+919598822384">
+                        <Button size="lg" variant="default">
+                            Let&rsquo;s Talk
+                        </Button>
+                    </a>
+                </div>
+            </div>
+
+            <div className="border-t border-neutral-800">
+                <div className="container mx-auto py-8 px-4 md:px-6 flex flex-col md:flex-row justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                        <Film className="h-6 w-6 text-orange-500" />
+                        <span className="font-heading font-bold text-xl text-white">Visualise.Co</span>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4 md:mt-0">
+                        {navLinks.map(link => (
+                            <a key={link.href} href={link.href} className="text-sm hover:text-orange-500 transition-colors">
+                                {link.label}
+                            </a>
+                        ))}
+                    </div>
+                    <div className="flex space-x-4 mt-4 md:mt-0">
+                        <a href="https://wa.me/+919598822384" className="text-neutral-400 hover:text-orange-500 transition-colors"><WhatsAppIcon className="w-6 h-6" /></a>
+                        <a href="https://www.instagram.com/visualise._co?igsh=azZzbXVrdWMxemJm" className="text-neutral-400 hover:text-orange-500 transition-colors"><InstagramIcon className="w-6 h-6" /></a>
+                        <a href="https://t.me/Visualiseco" className="text-neutral-400 hover:text-orange-500 transition-colors"><TelegramIcon className="w-6 h-6" /></a>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-black py-4">
+                <p className="text-center text-sm text-neutral-500">
+                    &copy; {new Date().getFullYear()} Visualise.Co. All Rights Reserved.
+                </p>
+            </div>
+        </footer>
+    );
+};
+
+
+// Main App Component
+// -----------------------------------------------------------------------------
+
+export default function App() {
+  // --- UPDATED: Removed isNavbarVisible state ---
+  const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 });
+
+  useEffect(() => {
+    // --- UPDATED: Removed handleScroll logic ---
+    const handleMouseMove = (e: MouseEvent) => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  // Initialize Lenis for smooth scrolling
+  useEffect(() => {
+    let rafId: number;
+    let lenis: InstanceType<typeof import('lenis').default> | null = null;
+
+    import('lenis').then((Lenis) => {
+      lenis = new Lenis.default({
+        duration: 1.2,
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      });
+
+      function raf(time: number) {
+        lenis?.raf(time);
+        rafId = requestAnimationFrame(raf);
+      }
+
+      rafId = requestAnimationFrame(raf);
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      lenis?.destroy();
+    };
+  }, []);
+
+  return (
+    <>
+      <div
+        className="glass-cursor"
+        style={{ left: `${mousePosition.x}px`, top: `${mousePosition.y}px` }}
+      />
+      <style>
+        {`
+          @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap');
+          
+          .font-heading {
+            font-family: 'Exo 2', sans-serif;
+          }
+
+          @keyframes marquee-up {
+            from { transform: translateY(0); }
+            to { transform: translateY(-50%); }
+          }
+          @keyframes marquee-down {
+            from { transform: translateY(-50%); }
+            to { transform: translateY(0); }
+          }
+          .animate-marquee-up {
+            animation: marquee-up 30s linear infinite;
+          }
+          .animate-marquee-down {
+            animation: marquee-down 30s linear infinite;
+          }
+          
+          /* Removed marquee-horizontal */
+
+          @keyframes slide-in-up {
+            from {
+              transform: translateY(30px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+
+          .animate-slide-in-up {
+            animation: slide-in-up 1s ease-out 0.2s forwards;
+            opacity: 0;
+          }
+          
+          .feature-card:hover {
+            background-color: rgba(22, 163, 74, 0.1);
+            border-left: 4px solid #f97316;
+          }
+          .glitch {
+            position: relative;
+          }
+          .glitch:before, .glitch:after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            overflow: hidden;
+            clip: rect(0, 900px, 0, 0);
+          }
+          .glitch:before {
+            left: 2px;
+            text-shadow: -2px 0 #00ffff;
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
+          }
+          .glitch:after {
+            left: -2px;
+            text-shadow: -2px 0 #ff00ff;
+            animation: glitch-anim-2 2s infinite linear alternate-reverse;
+          }
+          @keyframes glitch-anim-1 {
+            0% { clip: rect(42px, 9999px, 44px, 0); }
+            /* ... more steps ... */
+            100% { clip: rect(92px, 9999px, 98px, 0); }
+          }
+          @keyframes glitch-anim-2 {
+            0% { clip: rect(12px, 9999px, 54px, 0); }
+            /* ... more steps ... */
+            100% { clip: rect(62px, 9999px, 88px, 0); }
+          }
+
+          /* === UPDATED CAROUSEL STYLES === */
+          .embla {
+            overflow: hidden;
+          }
+          .embla__container {
+            display: flex;
+            margin-left: -1rem; 
+          }
+          .embla__slide {
+            /* Mobile: 70% width to show one slide centered */
+            flex: 0 0 70%;
+            min-width: 0;
+            padding-left: 1rem;
+            position: relative;
+          }
+
+          /* Tablet & Desktop: 33.3% width to show 3 slides, forcing center */
+          @media (min-width: 640px) {
+            .embla__slide {
+              flex: 0 0 33.3333%;
+            }
+          
+          /* On screens larger than 'lg' (1024px), show 5 slides */
+          @media (min-width: 1024px) {
+          }
+        `}
+      </style>
+      {/* --- UPDATED: Removed isVisible prop --- */}
+      <Navbar />
+      <main className="bg-black antialiased relative">
+        {/* Global Floating Particles */}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          {/* Floating particles across the entire page */}
+          {Array.from({ length: 30 }).map((_, i) => (
+            <motion.div
+              key={`global-particle-${i}`}
+              className="absolute rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: Math.random() * 3 + 1,
+                height: Math.random() * 3 + 1,
+                backgroundColor: i % 3 === 0 ? 'rgba(249, 115, 22, 0.4)' : i % 3 === 1 ? 'rgba(34, 211, 238, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+              }}
+              animate={{
+                y: [0, -100, 0],
+                x: [0, Math.random() * 50 - 25, 0],
+                opacity: [0.2, 0.6, 0.2],
+              }}
+              transition={{
+                duration: Math.random() * 15 + 10,
+                delay: Math.random() * 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+        <Hero />
+        <AnimatedSection><About /></AnimatedSection>
+        <AnimatedSection><Features /></AnimatedSection>
+        <AnimatedSection><Pricing /></AnimatedSection>
+        <AnimatedSection><Experience /></AnimatedSection>
+        <AnimatedSection><Clients /></AnimatedSection>
+        <AnimatedSection><Testimonials /></AnimatedSection>
+        <AnimatedSection><Contact /></AnimatedSection>
+        <AnimatedSection><GetHired /></AnimatedSection>
+        <Footer />
+      </main>
+    </>
+  );
+}
